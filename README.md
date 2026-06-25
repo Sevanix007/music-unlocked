@@ -7,7 +7,7 @@ Music Unlocked is an Android application built on the engine of NewPipe Extracto
 It allows you to stream music directly from YouTube for free, with zero ads, and complete user privacy.
 
 ## The Motivation
-I live in the Republic of Latvia (EU). Due to licensing restrictions, I cannot access many popular tracks on SoundCloud without using a VPN. Paying for multiple streaming subscriptions isn't an option for me. That is why I decided to restore justice to our world of music. I fully understand that similar projects already exist, but I am doing this for my own experience.
+I live in the Baltic (EU). Due to licensing restrictions, I cannot access many popular tracks on SoundCloud without using a VPN. Paying for multiple streaming subscriptions isn't an option for me. That is why I decided to restore justice to our world of music. I fully understand that similar projects already exist, but I am doing this for my own experience.
 
 ## 🚧 Planned Features
 🔊 **Ad-Free Streaming:** Enjoy your favorite tracks without interruptions.
