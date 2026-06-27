@@ -24,4 +24,23 @@ interface TrackDao {
     @Query("DELETE FROM Track WHERE trackId = :trackId")
     suspend fun deleteById(trackId: Long)
 
+
+    @Query("UPDATE Track SET trackName = :newName WHERE trackId = :trackId")
+    suspend fun updateTrackNameById(trackId: Int, newName: String)
+
+    // Функция для обновления только trackAuthor по ID
+    @Query("UPDATE Track SET trackAuthor = :newAuthor WHERE trackId = :trackId")
+    suspend fun updateTrackAuthorById(trackId: Int, newAuthor: String)
+
+    // Функция для обновления только trackLink по ID
+    @Query("UPDATE Track SET trackLink = :newLink WHERE trackId = :trackId")
+    suspend fun updateTrackLinkById(trackId: Int, newLink: String)
+
+
+    @Query("""
+    INSERT INTO Track (trackName, trackAuthor, trackDuration, trackListeners, trackLikes, trackLink)
+    VALUES (:trackName, :trackAuthor, 0, 0, 0, :trackLink)
+""")
+    suspend fun insertTestTrack(trackName: String, trackAuthor: String, trackLink: String)
+
 }

@@ -72,7 +72,12 @@ data class Playlist(
     val createdAt: Long,
 
     @ColumnInfo(name = "userId")
-    val userId: Int
+    val userId: Int,
+
+    @ColumnInfo(name = "isSystem", defaultValue = "0") // добавляем новое поле
+    val isSystem: Boolean = false // по умолчанию false
+
+
 ){
 init{
     require(playlistName.length in 1..20) {

@@ -15,7 +15,7 @@ import kotlin.reflect.KClass
 
 @Database(
     entities = [User::class, Playlist::class,Track::class, TrackPlaylist::class,] ,
-    version = 6
+    version = 7
 )
 abstract class AppDatabase : RoomDatabase() {
 

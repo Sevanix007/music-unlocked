@@ -169,6 +169,10 @@ class LoginScreen : ComponentActivity() {
                                 //}
                                 lifecycleScope.launch {
                                     try {
+
+//                                        db.TrackDao().insertTestTrack("Test1", "Unknown", "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3")
+//                                        db.TrackDao().insertTestTrack("Test2", "Unknown", "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3")
+//                                        db.TrackDao().insertTestTrack("Test4", "Unknown", "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3")
 //                                        var track1 = Track(
 //                                            trackName = "Test3",
 //                                            trackAuthor = "Unknown",
