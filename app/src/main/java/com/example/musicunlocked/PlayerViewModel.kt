@@ -11,6 +11,8 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
+import com.example.musicunlocked.database.entity.Playlist
+import com.example.musicunlocked.database.entity.TrackPlaylist
 import com.google.common.util.concurrent.MoreExecutors
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -28,6 +30,9 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
 
     private val _currentTrackTitle = mutableStateOf("")
     val currentTrackTitle: State<String> = _currentTrackTitle
+
+    private val _isLiked = mutableStateOf(false)
+    val isLiked: State<Boolean> = _isLiked
 
     private var controller: MediaController? = null
 
@@ -55,17 +60,69 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
                         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
                             _currentTrackTitle.value = mediaItem?.mediaMetadata?.title?.toString() ?: ""
                             _duration.longValue = duration.coerceAtLeast(0L)
+                            checkIfLiked(mediaItem)
                         }
                     })
                     _isPlaying.value = isPlaying
                     _duration.longValue = duration.coerceAtLeast(0L)
                     _currentTrackTitle.value = currentMediaItem?.mediaMetadata?.title?.toString() ?: ""
+                    checkIfLiked(currentMediaItem)
                 }
                 startPositionTracker()
             } catch (e: Exception) {
                 e.printStackTrace()
             }
         }, MoreExecutors.directExecutor())
+    }
+
+    private fun checkIfLiked(mediaItem: MediaItem?) {
+        val trackId = mediaItem?.mediaId?.toIntOrNull() ?: return
+        val userId = Session.userId ?: return
+        
+        viewModelScope.launch {
+            val db = DatabaseProvider.getDb(getApplication())
+            val likedPlaylist = db.PlaylistDao().getSystemPlaylistByName(userId, "Liked")
+            if (likedPlaylist != null) {
+                _isLiked.value = db.TrackPlaylistDao().isTrackInPlaylist(likedPlaylist.playlistId, trackId)
+            } else {
+                _isLiked.value = false
+            }
+        }
+    }
+
+    fun toggleLike() {
+        val trackId = controller?.currentMediaItem?.mediaId?.toIntOrNull() ?: return
+        val userId = Session.userId ?: return
+
+        viewModelScope.launch {
+            val db = DatabaseProvider.getDb(getApplication())
+            val playlistDao = db.PlaylistDao()
+            val trackPlaylistDao = db.TrackPlaylistDao()
+
+            var likedPlaylist = playlistDao.getSystemPlaylistByName(userId, "Liked")
+            
+            if (likedPlaylist == null) {
+                // Создаем Liked плейлист, если его нет
+                val newPlaylist = Playlist(
+                    playlistName = "Liked",
+                    createdAt = System.currentTimeMillis(),
+                    userId = userId,
+                    isSystem = true
+                )
+                playlistDao.insert(newPlaylist)
+                likedPlaylist = playlistDao.getSystemPlaylistByName(userId, "Liked")
+            }
+
+            likedPlaylist?.let { playlist ->
+                if (_isLiked.value) {
+                    trackPlaylistDao.deleteTrackFromPlaylist(playlist.playlistId, trackId)
+                    _isLiked.value = false
+                } else {
+                    trackPlaylistDao.insert(TrackPlaylist(playlistId = playlist.playlistId, trackId = trackId))
+                    _isLiked.value = true
+                }
+            }
+        }
     }
 
     private fun updateDurationInDatabase(mediaItem: MediaItem?) {

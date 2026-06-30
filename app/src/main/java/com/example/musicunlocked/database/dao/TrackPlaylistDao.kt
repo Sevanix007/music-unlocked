@@ -16,4 +16,10 @@ interface TrackPlaylistDao {
 
     @Query("SELECT * FROM TrackPlaylist WHERE playlistId = :playlistId")
     suspend fun getTracksInPlaylist(playlistId: Int): List<TrackPlaylist>
+
+    @Query("SELECT EXISTS(SELECT 1 FROM TrackPlaylist WHERE playlistId = :playlistId AND trackId = :trackId)")
+    suspend fun isTrackInPlaylist(playlistId: Int, trackId: Int): Boolean
+
+    @Query("DELETE FROM TrackPlaylist WHERE playlistId = :playlistId AND trackId = :trackId")
+    suspend fun deleteTrackFromPlaylist(playlistId: Int, trackId: Int)
 }

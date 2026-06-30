@@ -3,10 +3,12 @@ package com.example.musicunlocked
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 
@@ -19,6 +21,7 @@ fun AudioPlayer() {
     val currentPosition by viewModel.currentPosition
     val duration by viewModel.duration
     val currentTrackTitle by viewModel.currentTrackTitle
+    val isLiked by viewModel.isLiked
 
     var isDragging by remember { mutableStateOf(false) }
     var dragPosition by remember { mutableStateOf(0f) }
@@ -35,7 +38,23 @@ fun AudioPlayer() {
             modifier = Modifier.padding(bottom = 8.dp)
         )
 
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+
+            // Кнопка лайка
+            IconButton(onClick = { viewModel.toggleLike() }) {
+                Icon(
+                    imageVector = if (isLiked) Icons.Default.Favorite else Icons.Outlined.FavoriteBorder,
+                    contentDescription = "Like",
+                    tint = if (isLiked) Color.Red else LocalContentColor.current,
+                    modifier = Modifier.size(30.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.width(16.dp))
 
             IconButton(onClick = { viewModel.previous() }) {
                 Icon(
@@ -73,6 +92,9 @@ fun AudioPlayer() {
                     modifier = Modifier.size(40.dp)
                 )
             }
+            
+            // Заглушка для симметрии (или можно добавить еще одну кнопку)
+            Spacer(modifier = Modifier.width(46.dp))
         }
 
         Slider(
