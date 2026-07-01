@@ -81,7 +81,7 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
         
         viewModelScope.launch {
             val db = DatabaseProvider.getDb(getApplication())
-            val likedPlaylist = db.PlaylistDao().getSystemPlaylistByName(userId, "Liked")
+            val likedPlaylist = db.PlaylistDao().getSystemPlaylistByName(userId, "Понравившиеся")
             if (likedPlaylist != null) {
                 _isLiked.value = db.TrackPlaylistDao().isTrackInPlaylist(likedPlaylist.playlistId, trackId)
             } else {
@@ -99,18 +99,18 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
             val playlistDao = db.PlaylistDao()
             val trackPlaylistDao = db.TrackPlaylistDao()
 
-            var likedPlaylist = playlistDao.getSystemPlaylistByName(userId, "Liked")
-            
+            var likedPlaylist = playlistDao.getSystemPlaylistByName(userId, "Понравившиеся")
+
             if (likedPlaylist == null) {
                 // Создаем Liked плейлист, если его нет
                 val newPlaylist = Playlist(
-                    playlistName = "Liked",
+                    playlistName = "Понравившиеся",
                     createdAt = System.currentTimeMillis(),
                     userId = userId,
                     isSystem = true
                 )
                 playlistDao.insert(newPlaylist)
-                likedPlaylist = playlistDao.getSystemPlaylistByName(userId, "Liked")
+                likedPlaylist = playlistDao.getSystemPlaylistByName(userId, "Понравившиеся")
             }
 
             likedPlaylist?.let { playlist ->

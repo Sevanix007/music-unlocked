@@ -102,6 +102,10 @@ class MainActivity : ComponentActivity() {
                             val intent = Intent(this@MainActivity, ProfileActivity::class.java)
                             startActivity(intent)
                         },
+                        onNavigateToLibrary = {
+                            val intent = Intent(this@MainActivity, UserLibrary::class.java)
+                            startActivity(intent)
+                        },
                         onNavigateToRegister = {
                             val intent = Intent(this@MainActivity, RegisterScreen::class.java)
                             startActivity(intent)
@@ -123,6 +127,7 @@ class MainActivity : ComponentActivity() {
 @Composable
  fun MainScreen(
     onNavigateToProfile: () -> Unit,
+    onNavigateToLibrary: () -> Unit,
     onNavigateToRegister: () -> Unit,
     onNavigateToLogin: () -> Unit,
     modifier: Modifier = Modifier
@@ -147,6 +152,17 @@ class MainActivity : ComponentActivity() {
         ) {
             Text(
                 text = "Перейти в профиль",
+                fontSize = 18.sp
+            )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Button(
+            onClick = { onNavigateToLibrary() }
+        ) {
+            Text(
+                text = "Библиотека",
                 fontSize = 18.sp
             )
         }
