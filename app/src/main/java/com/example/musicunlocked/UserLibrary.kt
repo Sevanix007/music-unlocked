@@ -32,7 +32,10 @@ class UserLibrary : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     containerColor = Color.Black
                 ) { innerPadding ->
-                    LibraryScreen(modifier = Modifier.padding(innerPadding))
+                    LibraryScreen(
+                        modifier = Modifier.padding(innerPadding),
+                        onBackToMain = { finish() }
+                    )
                 }
             }
         }
@@ -40,7 +43,10 @@ class UserLibrary : ComponentActivity() {
 }
 
 @Composable
-fun LibraryScreen(modifier: Modifier = Modifier) {
+fun LibraryScreen(
+    modifier: Modifier = Modifier,
+    onBackToMain: () -> Unit
+) {
     var currentView by remember { mutableStateOf("sections") } // "sections", "liked", or "others"
     val context = LocalContext.current
     val db = remember { DatabaseProvider.getDb(context) }
@@ -82,6 +88,18 @@ fun LibraryScreen(modifier: Modifier = Modifier) {
             LibrarySection(title = "Понравившиеся", onClick = { currentView = "liked" })
             Spacer(modifier = Modifier.height(16.dp))
             LibrarySection(title = "Другие плейлисты", onClick = { currentView = "others" })
+            
+            Spacer(modifier = Modifier.weight(1f))
+            
+            Button(
+                onClick = onBackToMain,
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF202020)),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp)
+            ) {
+                Text("Назад на главную", color = Color.White, fontSize = 18.sp)
+            }
         } else if (currentView == "liked") {
             Row(
                 modifier = Modifier.fillMaxWidth(),
