@@ -50,7 +50,23 @@ class MusicService : MediaSessionService() {
     }
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? {
+        if (!Session.isLoggedIn) {
+            stopSelf()
+            return null
+        }
         return mediaSession
+    }
+    // Stop the song when...
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        if (intent?.action == "STOP_SERVICE") {
+            mediaSession?.player?.stop()
+            mediaSession?.player?.release()
+            mediaSession?.release()
+            mediaSession = null
+            stopSelf()
+            return START_NOT_STICKY
+        }
+        return super.onStartCommand(intent, flags, startId)
     }
 
     override fun onTaskRemoved(rootIntent: Intent?) {

@@ -52,9 +52,16 @@ class ProfileActivity : ComponentActivity() {
                             Session.userId = null
                             Session.username = null
                             Session.email = null
+
+                            // Останавливаем музыку при выходе
+                            val stopIntent = Intent(this@ProfileActivity, MusicService::class.java)
+                            stopIntent.action = "STOP_SERVICE"
+                            startService(stopIntent)
+
                             val intent = Intent(this@ProfileActivity, LoginScreen::class.java)
+                            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                             startActivity(intent)
-                            finish()  // Закрыть экран и вернуться назад
+                            finish()  // Закрыть экран
                             Toast.makeText(context, "Sign Out успешен", Toast.LENGTH_LONG).show()
                         }
                     ) {
