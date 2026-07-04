@@ -53,10 +53,12 @@ fun LibraryScreen(
     modifier: Modifier = Modifier,
     onBackToMain: () -> Unit
 ) {
-    var currentView by remember { mutableStateOf("sections") } // "sections", "liked", or "others"
+    var currentView by remember { mutableStateOf("sections") } // "sections", "liked", "others", or "playlist_detail"
+    var selectedPlaylist by remember { mutableStateOf<Playlist?>(null) }
     val context = LocalContext.current
     val db = remember { DatabaseProvider.getDb(context) }
     var likedTracks by remember { mutableStateOf<List<Track>>(emptyList()) }
+    var playlistTracks by remember { mutableStateOf<List<Track>>(emptyList()) }
     var otherPlaylists by remember { mutableStateOf<List<Playlist>>(emptyList()) }
     val userId = Session.userId
     val scope = rememberCoroutineScope()
@@ -74,7 +76,7 @@ fun LibraryScreen(
         }
     }
 
-    LaunchedEffect(currentView) {
+    LaunchedEffect(currentView, selectedPlaylist) {
         if (userId != null) {
             when (currentView) {
                 "liked" -> {
@@ -85,6 +87,11 @@ fun LibraryScreen(
                 }
                 "others" -> {
                     refreshPlaylists()
+                }
+                "playlist_detail" -> {
+                    selectedPlaylist?.let {
+                        playlistTracks = db.TrackDao().getTracksByPlaylistId(it.playlistId)
+                    }
                 }
             }
         }
@@ -204,6 +211,55 @@ fun LibraryScreen(
                             },
                             onDelete = {
                                 showDeleteConfirm = playlist
+                            },
+                            onClick = {
+                                selectedPlaylist = playlist
+                                currentView = "playlist_detail"
+                            }
+                        )
+                    }
+                }
+            }
+        } else if (currentView == "playlist_detail") {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                TextButton(onClick = { currentView = "others" }) {
+                    Text(text = "< Назад", color = Color(0xFF00E5FF), fontSize = 18.sp)
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = selectedPlaylist?.playlistName ?: "Плейлист",
+                    color = Color.White,
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            if (playlistTracks.isEmpty()) {
+                Text(
+                    text = "В этом плейлисте пока нет треков",
+                    color = Color.Gray,
+                    modifier = Modifier.padding(top = 16.dp)
+                )
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(playlistTracks) { track ->
+                        TrackItemWithDelete(
+                            trackName = "${track.trackName} - ${track.trackAuthor}",
+                            onDelete = {
+                                scope.launch {
+                                    selectedPlaylist?.let {
+                                        db.TrackPlaylistDao().deleteTrackFromPlaylist(it.playlistId, track.trackId)
+                                        playlistTracks = db.TrackDao().getTracksByPlaylistId(it.playlistId)
+                                    }
+                                }
                             }
                         )
                     }
@@ -318,12 +374,14 @@ fun LibraryScreen(
 fun PlaylistListItem(
     playlist: Playlist,
     onEdit: () -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    onClick: () -> Unit
 ) {
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .height(70.dp),
+            .height(70.dp)
+            .clickable { onClick() },
         color = Color(0xFF121212),
         shape = RoundedCornerShape(12.dp)
     ) {
@@ -391,5 +449,32 @@ fun TrackItem(trackName: String) {
             fontSize = 16.sp,
             modifier = Modifier.padding(16.dp)
         )
+    }
+}
+
+@Composable
+fun TrackItemWithDelete(trackName: String, onDelete: () -> Unit) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        color = Color(0xFF090909),
+        shape = RoundedCornerShape(8.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = trackName,
+                color = Color.LightGray,
+                fontSize = 16.sp,
+                modifier = Modifier.weight(1f)
+            )
+            IconButton(onClick = onDelete) {
+                Icon(Icons.Default.Delete, contentDescription = "Удалить из плейлиста", tint = Color(0xFFFF5252))
+            }
+        }
     }
 }

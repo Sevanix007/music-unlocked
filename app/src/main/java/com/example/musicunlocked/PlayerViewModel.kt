@@ -34,6 +34,12 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     private val _isLiked = mutableStateOf(false)
     val isLiked: State<Boolean> = _isLiked
 
+    private val _userPlaylists = mutableStateOf<List<Playlist>>(emptyList())
+    val userPlaylists: State<List<Playlist>> = _userPlaylists
+
+    private val _playlistsWithCurrentTrack = mutableStateOf<Set<Int>>(emptySet())
+    val playlistsWithCurrentTrack: State<Set<Int>> = _playlistsWithCurrentTrack
+
     private var controller: MediaController? = null
 
     init {
@@ -61,12 +67,14 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
                             _currentTrackTitle.value = mediaItem?.mediaMetadata?.title?.toString() ?: ""
                             _duration.longValue = duration.coerceAtLeast(0L)
                             checkIfLiked(mediaItem)
+                            updatePlaylistsInfo(mediaItem)
                         }
                     })
                     _isPlaying.value = isPlaying
                     _duration.longValue = duration.coerceAtLeast(0L)
                     _currentTrackTitle.value = currentMediaItem?.mediaMetadata?.title?.toString() ?: ""
                     checkIfLiked(currentMediaItem)
+                    updatePlaylistsInfo(currentMediaItem)
                 }
                 startPositionTracker()
             } catch (e: Exception) {
@@ -121,6 +129,42 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
                     trackPlaylistDao.insert(TrackPlaylist(playlistId = playlist.playlistId, trackId = trackId))
                     _isLiked.value = true
                 }
+            }
+        }
+    }
+
+    fun updatePlaylistsInfo(mediaItem: MediaItem? = controller?.currentMediaItem) {
+        val userId = Session.userId ?: return
+        val trackId = mediaItem?.mediaId?.toIntOrNull() ?: return
+
+        viewModelScope.launch {
+            val db = DatabaseProvider.getDb(getApplication())
+            val playlists = db.PlaylistDao().getPlaylistsByUser(userId).filter { !it.isSystem }
+            _userPlaylists.value = playlists
+
+            val inPlaylists = mutableSetOf<Int>()
+            for (p in playlists) {
+                if (db.TrackPlaylistDao().isTrackInPlaylist(p.playlistId, trackId)) {
+                    inPlaylists.add(p.playlistId)
+                }
+            }
+            _playlistsWithCurrentTrack.value = inPlaylists
+        }
+    }
+
+    fun toggleTrackInPlaylist(playlistId: Int) {
+        val trackId = controller?.currentMediaItem?.mediaId?.toIntOrNull() ?: return
+        
+        viewModelScope.launch {
+            val db = DatabaseProvider.getDb(getApplication())
+            val dao = db.TrackPlaylistDao()
+            
+            if (dao.isTrackInPlaylist(playlistId, trackId)) {
+                dao.deleteTrackFromPlaylist(playlistId, trackId)
+                _playlistsWithCurrentTrack.value = _playlistsWithCurrentTrack.value - playlistId
+            } else {
+                dao.insert(TrackPlaylist(playlistId = playlistId, trackId = trackId))
+                _playlistsWithCurrentTrack.value = _playlistsWithCurrentTrack.value + playlistId
             }
         }
     }

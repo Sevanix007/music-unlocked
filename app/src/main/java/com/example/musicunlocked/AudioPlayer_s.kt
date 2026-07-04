@@ -1,5 +1,6 @@
 package com.example.musicunlocked
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -22,9 +23,12 @@ fun AudioPlayer() {
     val duration by viewModel.duration
     val currentTrackTitle by viewModel.currentTrackTitle
     val isLiked by viewModel.isLiked
+    val userPlaylists by viewModel.userPlaylists
+    val playlistsWithTrack by viewModel.playlistsWithCurrentTrack
 
     var isDragging by remember { mutableStateOf(false) }
     var dragPosition by remember { mutableStateOf(0f) }
+    var showPlaylistDialog by remember { mutableStateOf(false) }
 
     val sliderPosition = if (isDragging) dragPosition else {
         if (duration > 0) currentPosition.toFloat() / duration.toFloat() else 0f
@@ -93,8 +97,17 @@ fun AudioPlayer() {
                 )
             }
             
-            // Заглушка для симметрии (или можно добавить еще одну кнопку)
-            Spacer(modifier = Modifier.width(46.dp))
+            IconButton(onClick = { 
+                viewModel.updatePlaylistsInfo()
+                showPlaylistDialog = true 
+            }) {
+                Icon(
+                    imageVector = Icons.Default.PlaylistAdd,
+                    contentDescription = "Add to playlist",
+                    modifier = Modifier.size(30.dp),
+                    tint = Color(0xFF00E5FF)
+                )
+            }
         }
 
         Slider(
@@ -112,6 +125,41 @@ fun AudioPlayer() {
         )
 
         Text("Duration: ${formatTime(currentPosition)} / ${formatTime(duration)}")
+    }
+
+    if (showPlaylistDialog) {
+        AlertDialog(
+            onDismissRequest = { showPlaylistDialog = false },
+            title = { Text("Добавить в плейлист") },
+            text = {
+                if (userPlaylists.isEmpty()) {
+                    Text("У вас пока нет своих плейлистов. Создайте их в библиотеке.")
+                } else {
+                    Column {
+                        userPlaylists.forEach { playlist ->
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { viewModel.toggleTrackInPlaylist(playlist.playlistId) }
+                                    .padding(vertical = 4.dp)
+                            ) {
+                                Checkbox(
+                                    checked = playlistsWithTrack.contains(playlist.playlistId),
+                                    onCheckedChange = { viewModel.toggleTrackInPlaylist(playlist.playlistId) }
+                                )
+                                Text(text = playlist.playlistName, modifier = Modifier.padding(start = 8.dp))
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showPlaylistDialog = false }) {
+                    Text("Готово")
+                }
+            }
+        )
     }
 }
 
