@@ -1,6 +1,7 @@
 package com.example.musicunlocked
 
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -62,6 +63,7 @@ fun LibraryScreen(
 
     var showAddDialog by remember { mutableStateOf(false) }
     var showEditDialog by remember { mutableStateOf<Playlist?>(null) }
+    var showDeleteConfirm by remember { mutableStateOf<Playlist?>(null) }
     var playlistNameInput by remember { mutableStateOf("") }
 
     fun refreshPlaylists() {
@@ -201,16 +203,39 @@ fun LibraryScreen(
                                 showEditDialog = playlist
                             },
                             onDelete = {
-                                scope.launch {
-                                    db.PlaylistDao().delete(playlist)
-                                    refreshPlaylists()
-                                }
+                                showDeleteConfirm = playlist
                             }
                         )
                     }
                 }
             }
         }
+    }
+
+    if (showDeleteConfirm != null) {
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirm = null },
+            title = { Text("Удалить плейлист?") },
+            text = { Text("Вы уверены, что хотите удалить плейлист \"${showDeleteConfirm?.playlistName}\"? Это действие нельзя отменить.") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val p = showDeleteConfirm
+                        if (p != null) {
+                            scope.launch {
+                                db.PlaylistDao().delete(p)
+                                refreshPlaylists()
+                                showDeleteConfirm = null
+                            }
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF5252))
+                ) { Text("Удалить", color = Color.White) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteConfirm = null }) { Text("Отмена") }
+            }
+        )
     }
 
     if (showAddDialog) {
@@ -229,15 +254,20 @@ fun LibraryScreen(
                 Button(onClick = {
                     if (playlistNameInput.isNotBlank() && userId != null) {
                         scope.launch {
-                            val newPlaylist = Playlist(
-                                playlistName = playlistNameInput,
-                                createdAt = System.currentTimeMillis(),
-                                userId = userId,
-                                isSystem = false
-                            )
-                            db.PlaylistDao().insert(newPlaylist)
-                            refreshPlaylists()
-                            showAddDialog = false
+                            val existing = db.PlaylistDao().getPlaylistByName(userId, playlistNameInput)
+                            if (existing != null) {
+                                Toast.makeText(context, "Плейлист с таким названием уже существует", Toast.LENGTH_SHORT).show()
+                            } else {
+                                val newPlaylist = Playlist(
+                                    playlistName = playlistNameInput,
+                                    createdAt = System.currentTimeMillis(),
+                                    userId = userId,
+                                    isSystem = false
+                                )
+                                db.PlaylistDao().insert(newPlaylist)
+                                refreshPlaylists()
+                                showAddDialog = false
+                            }
                         }
                     }
                 }) { Text("Создать") }
@@ -263,11 +293,16 @@ fun LibraryScreen(
             confirmButton = {
                 Button(onClick = {
                     val p = showEditDialog
-                    if (playlistNameInput.isNotBlank() && p != null) {
+                    if (playlistNameInput.isNotBlank() && p != null && userId != null) {
                         scope.launch {
-                            db.PlaylistDao().update(p.copy(playlistName = playlistNameInput))
-                            refreshPlaylists()
-                            showEditDialog = null
+                            val existing = db.PlaylistDao().getPlaylistByName(userId, playlistNameInput)
+                            if (existing != null && existing.playlistId != p.playlistId) {
+                                Toast.makeText(context, "Плейлист с таким названием уже существует", Toast.LENGTH_SHORT).show()
+                            } else {
+                                db.PlaylistDao().update(p.copy(playlistName = playlistNameInput))
+                                refreshPlaylists()
+                                showEditDialog = null
+                            }
                         }
                     }
                 }) { Text("Сохранить") }
