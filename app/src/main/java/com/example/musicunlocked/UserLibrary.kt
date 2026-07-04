@@ -9,6 +9,10 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -21,6 +25,7 @@ import androidx.compose.ui.unit.sp
 import com.example.musicunlocked.database.entity.Playlist
 import com.example.musicunlocked.database.entity.Track
 import com.example.musicunlocked.ui.theme.MusicUnlockedTheme
+import kotlinx.coroutines.launch
 
 class UserLibrary : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -53,6 +58,19 @@ fun LibraryScreen(
     var likedTracks by remember { mutableStateOf<List<Track>>(emptyList()) }
     var otherPlaylists by remember { mutableStateOf<List<Playlist>>(emptyList()) }
     val userId = Session.userId
+    val scope = rememberCoroutineScope()
+
+    var showAddDialog by remember { mutableStateOf(false) }
+    var showEditDialog by remember { mutableStateOf<Playlist?>(null) }
+    var playlistNameInput by remember { mutableStateOf("") }
+
+    fun refreshPlaylists() {
+        if (userId != null) {
+            scope.launch {
+                otherPlaylists = db.PlaylistDao().getPlaylistsByUser(userId).filter { !it.isSystem }
+            }
+        }
+    }
 
     LaunchedEffect(currentView) {
         if (userId != null) {
@@ -64,7 +82,7 @@ fun LibraryScreen(
                     }
                 }
                 "others" -> {
-                    otherPlaylists = db.PlaylistDao().getPlaylistsByUser(userId).filter { !it.isSystem }
+                    refreshPlaylists()
                 }
             }
         }
@@ -138,18 +156,28 @@ fun LibraryScreen(
         } else if (currentView == "others") {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                TextButton(onClick = { currentView = "sections" }) {
-                    Text(text = "< Назад", color = Color(0xFF00E5FF), fontSize = 18.sp)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    TextButton(onClick = { currentView = "sections" }) {
+                        Text(text = "< Назад", color = Color(0xFF00E5FF), fontSize = 18.sp)
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Мои плейлисты",
+                        color = Color.White,
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = "Мои плейлисты",
-                    color = Color.White,
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.Bold
-                )
+                
+                IconButton(onClick = { 
+                    playlistNameInput = ""
+                    showAddDialog = true 
+                }) {
+                    Icon(Icons.Default.Add, contentDescription = "Добавить", tint = Color(0xFF00E5FF))
+                }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -166,8 +194,124 @@ fun LibraryScreen(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(otherPlaylists) { playlist ->
-                        LibrarySection(title = playlist.playlistName, onClick = { /* TODO: Show tracks of this playlist */ })
+                        PlaylistListItem(
+                            playlist = playlist,
+                            onEdit = {
+                                playlistNameInput = playlist.playlistName
+                                showEditDialog = playlist
+                            },
+                            onDelete = {
+                                scope.launch {
+                                    db.PlaylistDao().delete(playlist)
+                                    refreshPlaylists()
+                                }
+                            }
+                        )
                     }
+                }
+            }
+        }
+    }
+
+    if (showAddDialog) {
+        AlertDialog(
+            onDismissRequest = { showAddDialog = false },
+            title = { Text("Новый плейлист") },
+            text = {
+                OutlinedTextField(
+                    value = playlistNameInput,
+                    onValueChange = { if (it.length <= 20) playlistNameInput = it },
+                    label = { Text("Название") },
+                    singleLine = true
+                )
+            },
+            confirmButton = {
+                Button(onClick = {
+                    if (playlistNameInput.isNotBlank() && userId != null) {
+                        scope.launch {
+                            val newPlaylist = Playlist(
+                                playlistName = playlistNameInput,
+                                createdAt = System.currentTimeMillis(),
+                                userId = userId,
+                                isSystem = false
+                            )
+                            db.PlaylistDao().insert(newPlaylist)
+                            refreshPlaylists()
+                            showAddDialog = false
+                        }
+                    }
+                }) { Text("Создать") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showAddDialog = false }) { Text("Отмена") }
+            }
+        )
+    }
+
+    if (showEditDialog != null) {
+        AlertDialog(
+            onDismissRequest = { showEditDialog = null },
+            title = { Text("Редактировать плейлист") },
+            text = {
+                OutlinedTextField(
+                    value = playlistNameInput,
+                    onValueChange = { if (it.length <= 20) playlistNameInput = it },
+                    label = { Text("Название") },
+                    singleLine = true
+                )
+            },
+            confirmButton = {
+                Button(onClick = {
+                    val p = showEditDialog
+                    if (playlistNameInput.isNotBlank() && p != null) {
+                        scope.launch {
+                            db.PlaylistDao().update(p.copy(playlistName = playlistNameInput))
+                            refreshPlaylists()
+                            showEditDialog = null
+                        }
+                    }
+                }) { Text("Сохранить") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showEditDialog = null }) { Text("Отмена") }
+            }
+        )
+    }
+}
+
+@Composable
+fun PlaylistListItem(
+    playlist: Playlist,
+    onEdit: () -> Unit,
+    onDelete: () -> Unit
+) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(70.dp),
+        color = Color(0xFF121212),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = playlist.playlistName,
+                color = Color.White,
+                fontSize = 18.sp,
+                modifier = Modifier.weight(1f)
+            )
+            
+            Row {
+                IconButton(onClick = onEdit) {
+                    Icon(Icons.Default.Edit, contentDescription = "Редактировать", tint = Color.Gray)
+                }
+                IconButton(onClick = onDelete) {
+                    Icon(Icons.Default.Delete, contentDescription = "Удалить", tint = Color(0xFFFF5252))
                 }
             }
         }

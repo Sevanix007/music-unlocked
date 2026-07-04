@@ -14,6 +14,12 @@ interface PlaylistDao {
     @Query("SELECT * FROM Playlist")
     suspend fun getAllPlaylists(): List<Playlist>
 
+    @androidx.room.Update
+    suspend fun update(playlist: Playlist)
+
+    @androidx.room.Delete
+    suspend fun delete(playlist: Playlist)
+
     @Query("SELECT * FROM Playlist WHERE userId = :userId")
     suspend fun getPlaylistsByUser(userId: Int): List<Playlist>
 
