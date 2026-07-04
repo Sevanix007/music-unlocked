@@ -19,11 +19,12 @@ import com.example.musicunlocked.database.entity.User
 import androidx.lifecycle.lifecycleScope
 import androidx.compose.ui.res.painterResource
 import androidx.compose.foundation.Image
+import android.widget.Toast
 import kotlinx.coroutines.launch
 import android.content.Context
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.LaunchedEffect
-
+import com.example.musicunlocked.database.entity.Track
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
@@ -43,12 +44,7 @@ import androidx.media3.common.MediaItem
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
 import androidx.compose.material3.Slider
-
-
-
-
-
-
+import com.example.musicunlocked.database.dao.TrackDao
 
 
 object Session {
@@ -62,6 +58,36 @@ object Session {
     var email: String? = null
 }
 class MainActivity : ComponentActivity() {
+//fortest
+    public fun addTestTrack(name: String, author: String, link: String) {
+        lifecycleScope.launch {
+            val db = DatabaseProvider.getDb(applicationContext)
+            db.TrackDao().insert(Track(trackName = name, trackAuthor = author, trackLink = link, trackLikes = 0, trackListeners = 0, trackDuration = 0 ))
+        }
+    }
+
+    fun addTrackIfNotExist(name: String, author: String, link: String) {
+        lifecycleScope.launch {
+            val db = DatabaseProvider.getDb(applicationContext)
+            val trackDao = db.TrackDao()
+            val existingTrack = trackDao.getTrackByNameAndAuthor(name, author)
+            if (existingTrack == null) {
+                trackDao.insert(
+                    Track(
+                        trackName = name,
+                        trackAuthor = author,
+                        trackLink = link,
+                        trackLikes = 0,
+                        trackListeners = 0,
+                        trackDuration = 0
+                    )
+                )
+                Toast.makeText(this@MainActivity, "Трек добавлен: $name", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(this@MainActivity, "Трек уже существует: $name", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
 
 
 
@@ -94,6 +120,7 @@ class MainActivity : ComponentActivity() {
 //            )
 //        }
         setContent {
+
             MusicUnlockedTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     MainScreen(
@@ -115,6 +142,9 @@ class MainActivity : ComponentActivity() {
                             startActivity(intent)
                             finish()
                         },
+                        onAddTrack = { name, author, link ->
+                            addTrackIfNotExist(name, author, link)
+                        },
                         modifier = Modifier.padding(innerPadding)
                     )
                 }
@@ -130,6 +160,7 @@ class MainActivity : ComponentActivity() {
     onNavigateToLibrary: () -> Unit,
     onNavigateToRegister: () -> Unit,
     onNavigateToLogin: () -> Unit,
+    onAddTrack: (String, String, String) -> Unit,
     modifier: Modifier = Modifier
 ){
 
@@ -156,6 +187,22 @@ class MainActivity : ComponentActivity() {
             )
         }
 
+//        Button(
+//            onClick = {
+//                addTestTrack(
+//                    name = "Название трека",
+//                    author = "Исполнитель",
+//                    link = "https://ссылка-на-трек.com"
+//                )
+//            }
+//        ) {
+//            Text(
+//                text = "Добавить треки",
+//                fontSize = 18.sp
+//            )
+//        }
+
+
         Spacer(modifier = Modifier.height(16.dp))
 
         Button(
@@ -167,7 +214,23 @@ class MainActivity : ComponentActivity() {
             )
         }
 
-//          Login logic
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Button(
+            onClick = {
+                onAddTrack(
+                    "SoundHelix8",
+                    "Madkid",
+                    "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3"
+                )
+            }
+        ) {
+            Text(
+                text = "Добавить новый трек",
+                fontSize = 18.sp
+            )
+        }
+
         val context = LocalContext.current
         val prefs = context.getSharedPreferences("session", Context.MODE_PRIVATE)
 

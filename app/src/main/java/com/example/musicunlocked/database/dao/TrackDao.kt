@@ -36,6 +36,9 @@ interface TrackDao {
     @Query("UPDATE Track SET trackLink = :newLink WHERE trackId = :trackId")
     suspend fun updateTrackLinkById(trackId: Int, newLink: String)
 
+    @Query("SELECT * FROM Track WHERE trackName = :name AND trackAuthor = :author LIMIT 1")
+    suspend fun getTrackByNameAndAuthor(name: String, author: String): Track?
+
     @Query("SELECT Track.* FROM Track INNER JOIN TrackPlaylist ON Track.trackId = TrackPlaylist.trackId WHERE TrackPlaylist.playlistId = :playlistId")
     suspend fun getTracksByPlaylistId(playlistId: Int): List<Track>
 
