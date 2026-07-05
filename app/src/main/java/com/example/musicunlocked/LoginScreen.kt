@@ -6,14 +6,12 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -22,18 +20,11 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.lifecycleScope
-import com.example.musicunlocked.database.entity.User
 import com.example.musicunlocked.ui.theme.MusicUnlockedTheme
 import kotlinx.coroutines.launch
 import androidx.compose.ui.res.painterResource
 import androidx.compose.foundation.Image
 import android.content.Context
-import com.example.musicunlocked.database.entity.Track
-//
-//ДОБАВЬ ВОЗМОЖНОСТЬ ВВОДА ЕМЕЙЛ ЗАВТРА!!!!!!!!!
-//
-
-//
 
 class LoginScreen : ComponentActivity() {
 
@@ -42,11 +33,9 @@ class LoginScreen : ComponentActivity() {
 
         setContent {
             MusicUnlockedTheme {
-
                 val context = LocalContext.current
                 val db = DatabaseProvider.getDb(context)
 
-                var username by remember { mutableStateOf("") }
                 var password by remember { mutableStateOf("") }
                 var email by remember { mutableStateOf("") }
 
@@ -63,12 +52,6 @@ class LoginScreen : ComponentActivity() {
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Center
                     ) {
-
-//                        // Место под синюю ноту
-//                        Box(
-//                            modifier = Modifier
-//                                .size(100.dp)
-//                        )
                         Image(
                             painter = painterResource(id = R.drawable.blue_note3),
                             contentDescription = null,
@@ -92,8 +75,6 @@ class LoginScreen : ComponentActivity() {
                         )
 
                         Spacer(modifier = Modifier.height(25.dp))
-
-
 
                         OutlinedTextField(
                             value = email,
@@ -119,13 +100,7 @@ class LoginScreen : ComponentActivity() {
                                 .height(58.dp)
                         )
 
-
-
-
                         Spacer(modifier = Modifier.height(12.dp))
-
-
-
 
                         OutlinedTextField(
                             value = password,
@@ -152,64 +127,13 @@ class LoginScreen : ComponentActivity() {
                                 .height(58.dp)
                         )
 
-
                         Spacer(modifier = Modifier.height(19.dp))
 
                         Button(
                             onClick = {
-                            //здесь надо сделать логин
-                            //чтобы был логин, надо делать
-                            //для этого смотреть в MainAcivity object Session {
-                                //
-                                //    var isLoggedIn = false
-                                //
-                                //    var userId: Int? = null
-                                //
-                                //    var username: String? = null
-                                //}
                                 lifecycleScope.launch {
                                     try {
-
-//                                        db.TrackDao().insertTestTrack("Test1", "Unknown", "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3")
-//                                        db.TrackDao().insertTestTrack("Test2", "Unknown", "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3")
-//                                        db.TrackDao().insertTestTrack("Test4", "Unknown", "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3")
-//                                        var track1 = Track(
-//                                            trackName = "Test3",
-//                                            trackAuthor = "Unknown",
-//                                            trackDuration = 1,
-//                                            trackListeners = 1,
-//                                            trackLikes =1,
-//                                            trackLink = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3",
-//
-//                                        )
-//                                        db.TrackDao().insert(track1)
-//
-//
-//                                        var track2 = Track(
-//                                            trackName = "Test1",
-//                                            trackAuthor = "Unknown",
-//                                            trackDuration = 1,
-//                                            trackListeners = 1,
-//                                            trackLikes =1,
-//                                            trackLink = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
-//
-//                                            )
-//                                        db.TrackDao().insert(track1)
-//
-//                                        var track3 = Track(
-//                                            trackName = "Test2",
-//                                            trackAuthor = "Unknown",
-//                                            trackDuration = 1,
-//                                            trackListeners = 1,
-//                                            trackLikes =1,
-//                                            trackLink = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
-//
-//                                            )
-//                                        db.TrackDao().insert(track1)
-
-
                                         val existingEmail = db.userDao().getUserByEmail(email)
-                                        val user2 = db.userDao().getUserByEmail(email)
                                         if (existingEmail == null) {
                                             Toast.makeText(
                                                 context,
@@ -218,8 +142,6 @@ class LoginScreen : ComponentActivity() {
                                             ).show()
                                             return@launch
                                         }
-
-
 
                                         val existingPassword = db.userDao().getUserByPassword(password)
                                         if (existingPassword == null) {
@@ -231,26 +153,14 @@ class LoginScreen : ComponentActivity() {
                                             return@launch
                                         }
 
-
-//                                        здесь надо добавить запрос sql, либо написать функцию в юзере
-                                        // чтобы добавить контекст
-                                        if (existingEmail.userId != existingPassword.userId){
+                                        if (existingEmail.userId != existingPassword.userId) {
                                             Toast.makeText(
                                                 context,
                                                 "Неверный Email или Пароль",
                                                 Toast.LENGTH_LONG
                                             ).show()
                                             return@launch
-                                        }
-                                        else {
-//                                            object Session {
-//
-//    var isLoggedIn = false
-//
-//    var userId: Int? = null
-//
-//    var username: String? = null
-//}
+                                        } else {
                                             val prefs = context.getSharedPreferences("session", Context.MODE_PRIVATE)
 
                                             prefs.edit()
@@ -270,15 +180,11 @@ class LoginScreen : ComponentActivity() {
                                                 "Login успешен",
                                                 Toast.LENGTH_SHORT
                                             ).show()
-                                        val intent = Intent(this@LoginScreen, MainActivity::class.java)
-                                        startActivity(intent)
-                                        finish()
-
+                                            val intent = Intent(this@LoginScreen, MainActivity::class.java)
+                                            startActivity(intent)
+                                            finish()
                                         }
-
-
                                     } catch (e: Exception) {
-
                                         Toast.makeText(
                                             context,
                                             "Ошибка: ${e.message}",
@@ -295,7 +201,6 @@ class LoginScreen : ComponentActivity() {
                                 .fillMaxWidth()
                                 .height(58.dp)
                         ) {
-
                             Box(
                                 modifier = Modifier
                                     .fillMaxSize()
@@ -310,7 +215,6 @@ class LoginScreen : ComponentActivity() {
                                     ),
                                 contentAlignment = Alignment.Center
                             ) {
-
                                 Text(
                                     text = " Sign In",
                                     color = Color.White,
@@ -327,12 +231,10 @@ class LoginScreen : ComponentActivity() {
                                 val intent = Intent(this@LoginScreen, RegisterScreen::class.java)
                                 startActivity(intent)
                                 finish()
-
                             }
                         ) {
-
                             Text(
-                                text = "Already have an account?" ,
+                                text = "Already have an account?",
                                 color = Color(0xFFFFFFFF)
                             )
                             Text(

@@ -25,7 +25,6 @@ import android.content.Context
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.LaunchedEffect
 import com.example.musicunlocked.database.entity.Track
-
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Pause
@@ -34,7 +33,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
-
 //Internet
 import android.net.Uri
 import androidx.compose.runtime.DisposableEffect
@@ -122,7 +120,15 @@ class MainActivity : ComponentActivity() {
         setContent {
 
             MusicUnlockedTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+                Scaffold(
+                    modifier = Modifier.fillMaxSize(),
+                    bottomBar = {
+                        MiniPlayer(onTap = {
+                            val intent = Intent(this@MainActivity, TrackActivity::class.java)
+                            startActivity(intent)
+                        })
+                    }
+                ) { innerPadding ->
                     MainScreen(
                         onNavigateToProfile = {
                             // ✅ ПРАВИЛЬНЫЙ ПЕРЕХОД
@@ -244,35 +250,14 @@ class MainActivity : ComponentActivity() {
             onNavigateToLogin()
         }
 
-//        LaunchedEffect(Session.isLoggedIn) {
-//            if (!Session.isLoggedIn) {
-//                onNavigateToLogin()
-//            }
-//        }
-//        Button(
-//            onClick = {
-//                if (!Session.isLoggedIn){
-//                onNavigateToRegister()} }
-//        ) {
-//            Text(
-//                text = "Перейти в reg",
-//                fontSize = 18.sp
-//            )
-//        }
-
 
         Image(
             painter = painterResource(id = R.drawable.logo), // вместо "logo" напиши имя твоего файла
             contentDescription = "Мой логотип", // для незрячих людей, можно написать "Лого"
             modifier = Modifier.size(150.dp) // размер в пикселах (150 dp)
         )
-//        AudioPlayer_s.kt
-        AudioPlayer()
 
     }
-//    Spacer(modifier = Modifier.height(20.dp))
-
-
 }
 
 

@@ -28,6 +28,9 @@ import com.example.musicunlocked.database.entity.Track
 import com.example.musicunlocked.ui.theme.MusicUnlockedTheme
 import kotlinx.coroutines.launch
 
+import android.content.Intent
+import com.example.musicunlocked.TrackActivity
+
 class UserLibrary : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -36,7 +39,13 @@ class UserLibrary : ComponentActivity() {
             MusicUnlockedTheme {
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
-                    containerColor = Color.Black
+                    containerColor = Color.Black,
+                    bottomBar = {
+                        MiniPlayer(onTap = {
+                            val intent = Intent(this@UserLibrary, TrackActivity::class.java)
+                            startActivity(intent)
+                        })
+                    }
                 ) { innerPadding ->
                     LibraryScreen(
                         modifier = Modifier.padding(innerPadding),

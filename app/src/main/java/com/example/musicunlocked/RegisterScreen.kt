@@ -6,14 +6,12 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -28,11 +26,6 @@ import kotlinx.coroutines.launch
 import androidx.compose.ui.res.painterResource
 import androidx.compose.foundation.Image
 import android.content.Intent
-//
-//ДОБАВЬ ВОЗМОЖНОСТЬ ВВОДА ЕМЕЙЛ ЗАВТРА!!!!!!!!!
-//
-
-//
 
 class RegisterScreen : ComponentActivity() {
 
@@ -41,7 +34,6 @@ class RegisterScreen : ComponentActivity() {
 
         setContent {
             MusicUnlockedTheme {
-
                 val context = LocalContext.current
                 val db = DatabaseProvider.getDb(context)
 
@@ -62,12 +54,6 @@ class RegisterScreen : ComponentActivity() {
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Center
                     ) {
-
-//                        // Место под синюю ноту
-//                        Box(
-//                            modifier = Modifier
-//                                .size(100.dp)
-//                        )
                         Image(
                             painter = painterResource(id = R.drawable.blue_note3),
                             contentDescription = null,
@@ -118,12 +104,6 @@ class RegisterScreen : ComponentActivity() {
 
                         Spacer(modifier = Modifier.height(12.dp))
 
-
-
-                        //                        Email
-
-//                        Spacer(modifier = Modifier.height(18.dp))
-
                         OutlinedTextField(
                             value = email,
                             onValueChange = { email = it },
@@ -148,16 +128,7 @@ class RegisterScreen : ComponentActivity() {
                                 .height(58.dp)
                         )
 
-
-
-
-//                        email
-
-
                         Spacer(modifier = Modifier.height(12.dp))
-
-
-
 
                         OutlinedTextField(
                             value = password,
@@ -183,38 +154,6 @@ class RegisterScreen : ComponentActivity() {
                                 .fillMaxWidth()
                                 .height(58.dp)
                         )
-////                        Email
-//
-//                        Spacer(modifier = Modifier.height(18.dp))
-//
-//                        OutlinedTextField(
-//                            value = email,
-//                            onValueChange = { email = it },
-//                            placeholder = {
-//                                Text(
-//                                    "email",
-//                                    color = Color.Gray
-//                                )
-//                            },
-//                            singleLine = true,
-//                            colors = OutlinedTextFieldDefaults.colors(
-//                                focusedContainerColor = Color(0xFF090909),
-//                                unfocusedContainerColor = Color(0xFF090909),
-//                                focusedBorderColor = Color(0xFF202020),
-//                                unfocusedBorderColor = Color(0xFF202020),
-//                                focusedTextColor = Color.White,
-//                                unfocusedTextColor = Color.White
-//                            ),
-//                            shape = RoundedCornerShape(50.dp),
-//                            modifier = Modifier
-//                                .fillMaxWidth()
-//                                .height(58.dp)
-//                        )
-//
-//
-//
-//
-////                        email
 
                         Spacer(modifier = Modifier.height(19.dp))
 
@@ -222,7 +161,6 @@ class RegisterScreen : ComponentActivity() {
                             onClick = {
                                 lifecycleScope.launch {
                                     try {
-
                                         val existingUser = db.userDao().getUserByUsername(username)
                                         if (existingUser != null) {
                                             Toast.makeText(
@@ -269,7 +207,6 @@ class RegisterScreen : ComponentActivity() {
                                         finish()
 
                                     } catch (e: Exception) {
-
                                         Toast.makeText(
                                             context,
                                             "Ошибка: ${e.message}",
@@ -286,7 +223,6 @@ class RegisterScreen : ComponentActivity() {
                                 .fillMaxWidth()
                                 .height(58.dp)
                         ) {
-
                             Box(
                                 modifier = Modifier
                                     .fillMaxSize()
@@ -301,7 +237,6 @@ class RegisterScreen : ComponentActivity() {
                                     ),
                                 contentAlignment = Alignment.Center
                             ) {
-
                                 Text(
                                     text = "Sign Up",
                                     color = Color.White,
@@ -317,17 +252,13 @@ class RegisterScreen : ComponentActivity() {
                             onClick = {
                                 val intent = Intent(this@RegisterScreen, LoginScreen::class.java)
                                 startActivity(intent)
-                               finish()
-//                                val intent = Intent(this, LoginScreen::class.java)
-//                                startActivity(intent)
-
+                                finish()
                             }
                         ) {
-
                             Text(
-                                text = "Already have an account?" ,
+                                text = "Already have an account?",
                                 color = Color(0xFFFFFFFF)
-                            )
+                                )
                             Text(
                                 text = " Sign In",
                                 color = Color(0xFF00E5FF)

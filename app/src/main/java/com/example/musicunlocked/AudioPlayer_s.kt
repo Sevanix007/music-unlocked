@@ -14,6 +14,89 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 
 @Composable
+fun MiniPlayer(onTap: () -> Unit) {
+    val viewModel: PlayerViewModel = viewModel()
+    val isPlaying by viewModel.isPlaying
+    val currentTrackTitle by viewModel.currentTrackTitle
+    val currentPosition by viewModel.currentPosition
+    val duration by viewModel.duration
+
+    val progress = if (duration > 0) currentPosition.toFloat() / duration.toFloat() else 0f
+
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(64.dp)
+            .clickable { onTap() },
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        tonalElevation = 8.dp
+    ) {
+        Column {
+            LinearProgressIndicator(
+                progress = { progress },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(2.dp),
+                color = MaterialTheme.colorScheme.primary,
+                trackColor = Color.Transparent
+            )
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Placeholder for track image
+                Surface(
+                    modifier = Modifier.size(48.dp),
+                    shape = MaterialTheme.shapes.small,
+                    color = Color.Gray
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.MusicNote,
+                        contentDescription = null,
+                        modifier = Modifier.padding(8.dp)
+                    )
+                }
+
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(start = 12.dp)
+                ) {
+                    Text(
+                        text = if (currentTrackTitle.isEmpty()) "Не воспроизводится" else currentTrackTitle,
+                        style = MaterialTheme.typography.bodyMedium,
+                        maxLines = 1
+                    )
+                    Text(
+                        text = "Music Unlocked", // Можно добавить автора, если есть в ViewModel
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                IconButton(onClick = {
+                    if (isPlaying) viewModel.pause() else viewModel.play()
+                }) {
+                    Icon(
+                        imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                        contentDescription = "Play/Pause"
+                    )
+                }
+
+                IconButton(onClick = { viewModel.next() }) {
+                    Icon(
+                        imageVector = Icons.Default.SkipNext,
+                        contentDescription = "Next"
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
 fun AudioPlayer() {
 
     val viewModel: PlayerViewModel = viewModel()
