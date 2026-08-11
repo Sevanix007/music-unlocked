@@ -1,5 +1,6 @@
 package com.example.musicunlocked
 
+import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -8,12 +9,14 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -23,13 +26,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.musicunlocked.database.entity.Playlist
 import com.example.musicunlocked.database.entity.Track
 import com.example.musicunlocked.ui.theme.MusicUnlockedTheme
 import kotlinx.coroutines.launch
-
-import android.content.Intent
-import com.example.musicunlocked.TrackActivity
 
 class UserLibrary : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -62,6 +63,7 @@ fun LibraryScreen(
     modifier: Modifier = Modifier,
     onBackToMain: () -> Unit
 ) {
+    val playerViewModel: PlayerViewModel = viewModel()
     var currentView by remember { mutableStateOf("sections") } // "sections", "liked", "others", or "playlist_detail"
     var selectedPlaylist by remember { mutableStateOf<Playlist?>(null) }
     val context = LocalContext.current
@@ -166,8 +168,11 @@ fun LibraryScreen(
                     modifier = Modifier.fillMaxSize(),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    items(likedTracks) { track ->
-                        TrackItem(trackName = "${track.trackName} - ${track.trackAuthor}")
+                    itemsIndexed(likedTracks) { index, track ->
+                        TrackItem(
+                            trackName = "${track.trackName} - ${track.trackAuthor}",
+                            onPlay = { playerViewModel.setQueue(likedTracks, index) }
+                        )
                     }
                 }
             }
@@ -259,9 +264,10 @@ fun LibraryScreen(
                     modifier = Modifier.fillMaxSize(),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    items(playlistTracks) { track ->
+                    itemsIndexed(playlistTracks) { index, track ->
                         TrackItemWithDelete(
                             trackName = "${track.trackName} - ${track.trackAuthor}",
+                            onPlay = { playerViewModel.setQueue(playlistTracks, index) },
                             onDelete = {
                                 scope.launch {
                                     selectedPlaylist?.let {
@@ -446,23 +452,7 @@ fun LibrarySection(title: String, onClick: () -> Unit) {
 }
 
 @Composable
-fun TrackItem(trackName: String) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        color = Color(0xFF090909),
-        shape = RoundedCornerShape(8.dp)
-    ) {
-        Text(
-            text = trackName,
-            color = Color.LightGray,
-            fontSize = 16.sp,
-            modifier = Modifier.padding(16.dp)
-        )
-    }
-}
-
-@Composable
-fun TrackItemWithDelete(trackName: String, onDelete: () -> Unit) {
+fun TrackItem(trackName: String, onPlay: () -> Unit) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
         color = Color(0xFF090909),
@@ -471,7 +461,7 @@ fun TrackItemWithDelete(trackName: String, onDelete: () -> Unit) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(8.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
@@ -479,10 +469,42 @@ fun TrackItemWithDelete(trackName: String, onDelete: () -> Unit) {
                 text = trackName,
                 color = Color.LightGray,
                 fontSize = 16.sp,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f).padding(start = 8.dp)
             )
-            IconButton(onClick = onDelete) {
-                Icon(Icons.Default.Delete, contentDescription = "Удалить из плейлиста", tint = Color(0xFFFF5252))
+            IconButton(onClick = onPlay) {
+                Icon(Icons.Default.PlayArrow, contentDescription = "Play", tint = Color(0xFF00E5FF))
+            }
+        }
+    }
+}
+
+@Composable
+fun TrackItemWithDelete(trackName: String, onPlay: () -> Unit, onDelete: () -> Unit) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        color = Color(0xFF090909),
+        shape = RoundedCornerShape(8.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = trackName,
+                color = Color.LightGray,
+                fontSize = 16.sp,
+                modifier = Modifier.weight(1f).padding(start = 8.dp)
+            )
+            Row {
+                IconButton(onClick = onPlay) {
+                    Icon(Icons.Default.PlayArrow, contentDescription = "Play", tint = Color(0xFF00E5FF))
+                }
+                IconButton(onClick = onDelete) {
+                    Icon(Icons.Default.Delete, contentDescription = "Удалить из плейлиста", tint = Color(0xFFFF5252))
+                }
             }
         }
     }

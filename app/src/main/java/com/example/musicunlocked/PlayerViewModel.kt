@@ -12,6 +12,7 @@ import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.example.musicunlocked.database.entity.Playlist
+import com.example.musicunlocked.database.entity.Track
 import com.example.musicunlocked.database.entity.TrackPlaylist
 import com.google.common.util.concurrent.MoreExecutors
 import kotlinx.coroutines.delay
@@ -216,6 +217,27 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
 
     fun seekTo(position: Long) {
         controller?.seekTo(position)
+    }
+
+    fun setQueue(tracks: List<Track>, startIndex: Int = 0) {
+        controller?.let { player ->
+            val mediaItems = tracks.map { track ->
+                MediaItem.Builder()
+                    .setMediaId(track.trackId.toString())
+                    .setUri(track.trackLink)
+                    .setMediaMetadata(
+                        androidx.media3.common.MediaMetadata.Builder()
+                            .setTitle(track.trackName)
+                            .setArtist(track.trackAuthor)
+                            .build()
+                    )
+                    .build()
+            }
+            player.setMediaItems(mediaItems)
+            player.prepare()
+            player.seekTo(startIndex, 0L)
+            player.play()
+        }
     }
 
     override fun onCleared() {

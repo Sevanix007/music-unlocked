@@ -2,6 +2,7 @@ package com.example.musicunlocked
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.FavoriteBorder
@@ -25,10 +26,13 @@ fun MiniPlayer(onTap: () -> Unit) {
 
     Surface(
         modifier = Modifier
+            .padding(horizontal = 8.dp)
+            .padding(bottom = 24.dp) // Значительный отступ снизу, чтобы плеер "парил"
             .fillMaxWidth()
             .height(64.dp)
             .clickable { onTap() },
         color = MaterialTheme.colorScheme.surfaceVariant,
+        shape = RoundedCornerShape(12.dp),
         tonalElevation = 8.dp
     ) {
         Column {
@@ -179,7 +183,7 @@ fun AudioPlayer() {
                     modifier = Modifier.size(40.dp)
                 )
             }
-            
+
             IconButton(onClick = { 
                 viewModel.updatePlaylistsInfo()
                 showPlaylistDialog = true 

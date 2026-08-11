@@ -1,68 +1,38 @@
 package com.example.musicunlocked
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.Button
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.example.musicunlocked.ui.theme.MusicUnlockedTheme
-import com.example.musicunlocked.database.entity.User
-import androidx.lifecycle.lifecycleScope
-import androidx.compose.ui.res.painterResource
-import androidx.compose.foundation.Image
-import android.widget.Toast
-import kotlinx.coroutines.launch
-import android.content.Context
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.runtime.LaunchedEffect
-import com.example.musicunlocked.database.entity.Track
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Pause
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
-//Internet
-import android.net.Uri
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.remember
-import androidx.compose.ui.viewinterop.AndroidView
-import androidx.media3.common.MediaItem
-import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.ui.PlayerView
-import androidx.compose.material3.Slider
-import com.example.musicunlocked.database.dao.TrackDao
-
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.musicunlocked.database.entity.Track
+import com.example.musicunlocked.ui.theme.MusicUnlockedTheme
+import kotlinx.coroutines.launch
 
 object Session {
-
     var isLoggedIn = false
-
     var userId: Int? = null
-
     var username: String? = null
-
     var email: String? = null
 }
+
 class MainActivity : ComponentActivity() {
-//fortest
-    public fun addTestTrack(name: String, author: String, link: String) {
-        lifecycleScope.launch {
-            val db = DatabaseProvider.getDb(applicationContext)
-            db.TrackDao().insert(Track(trackName = name, trackAuthor = author, trackLink = link, trackLikes = 0, trackListeners = 0, trackDuration = 0 ))
-        }
-    }
 
     fun addTrackIfNotExist(name: String, author: String, link: String) {
         lifecycleScope.launch {
@@ -87,38 +57,10 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-
-
-//    JUST COPY IT IF YA NEED IT
-//    val intent = Intent(this@MainActivity, LoginScreen::class.java)
-//    startActivity(intent)
-//    finish()
-
-
-
-//    val intent = Intent(this@RegisterScreen, LoginScreen::class.java)
-//    startActivity(intent)
-//    finish()
-
-
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        val db = DatabaseProvider.getDb(applicationContext)
-
-
-//
-//        lifecycleScope.launch {
-//            db.userDao().insert(
-//                User(
-//                    username = "test",
-//                    email = "test@mail.com"
-//                )
-//            )
-//        }
         setContent {
-
             MusicUnlockedTheme {
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
@@ -131,7 +73,6 @@ class MainActivity : ComponentActivity() {
                 ) { innerPadding ->
                     MainScreen(
                         onNavigateToProfile = {
-                            // ✅ ПРАВИЛЬНЫЙ ПЕРЕХОД
                             val intent = Intent(this@MainActivity, ProfileActivity::class.java)
                             startActivity(intent)
                         },
@@ -155,69 +96,51 @@ class MainActivity : ComponentActivity() {
                     )
                 }
             }
-
         }
     }
 }
 
 @Composable
- fun MainScreen(
+fun MainScreen(
     onNavigateToProfile: () -> Unit,
     onNavigateToLibrary: () -> Unit,
     onNavigateToRegister: () -> Unit,
     onNavigateToLogin: () -> Unit,
     onAddTrack: (String, String, String) -> Unit,
     modifier: Modifier = Modifier
-){
+) {
+    val playerViewModel: PlayerViewModel = viewModel()
+    val context = LocalContext.current
+    val db = remember { DatabaseProvider.getDb(context) }
+    var allTracks by remember { mutableStateOf<List<Track>>(emptyList()) }
+
+    LaunchedEffect(Unit) {
+        allTracks = db.TrackDao().getAllTracks()
+    }
 
     Column(
         modifier = modifier
-            .fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-
+            .fillMaxSize()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
             text = "Music Unlocked",
             fontSize = 28.sp
         )
 
-        Spacer(modifier = Modifier.height(32.dp))
-
-        Button(
-            onClick = { onNavigateToProfile() }
-        ) {
-            Text(
-                text = "Перейти в профиль",
-                fontSize = 18.sp
-            )
-        }
-
-//        Button(
-//            onClick = {
-//                addTestTrack(
-//                    name = "Название трека",
-//                    author = "Исполнитель",
-//                    link = "https://ссылка-на-трек.com"
-//                )
-//            }
-//        ) {
-//            Text(
-//                text = "Добавить треки",
-//                fontSize = 18.sp
-//            )
-//        }
-
-
         Spacer(modifier = Modifier.height(16.dp))
 
-        Button(
-            onClick = { onNavigateToLibrary() }
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-            Text(
-                text = "Библиотека",
-                fontSize = 18.sp
-            )
+            Button(onClick = { onNavigateToProfile() }) {
+                Text(text = "Профиль")
+            }
+            Button(onClick = { onNavigateToLibrary() }) {
+                Text(text = "Библиотека")
+            }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -229,134 +152,54 @@ class MainActivity : ComponentActivity() {
                     "Madkid",
                     "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3"
                 )
-            }
+            },
+            modifier = Modifier.fillMaxWidth()
         ) {
-            Text(
-                text = "Добавить новый трек",
-                fontSize = 18.sp
-            )
+            Text(text = "Добавить новый трек")
         }
 
-        val context = LocalContext.current
-        val prefs = context.getSharedPreferences("session", Context.MODE_PRIVATE)
+        Spacer(modifier = Modifier.height(24.dp))
 
+        Text(text = "Все треки в базе данных:", fontSize = 20.sp, modifier = Modifier.align(Alignment.Start))
+
+        LazyColumn(
+            modifier = Modifier.weight(1f).fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+            contentPadding = PaddingValues(vertical = 8.dp)
+        ) {
+            itemsIndexed(allTracks) { index, track ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(text = track.trackName, fontSize = 16.sp)
+                        Text(text = track.trackAuthor, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    IconButton(onClick = { playerViewModel.setQueue(allTracks, index) }) {
+                        Icon(
+                            imageVector = Icons.Default.PlayArrow,
+                            contentDescription = "Play",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+                HorizontalDivider(thickness = 0.5.dp, color = MaterialTheme.colorScheme.outlineVariant)
+            }
+        }
+
+        val prefs = context.getSharedPreferences("session", Context.MODE_PRIVATE)
         Session.isLoggedIn = prefs.getBoolean("isLoggedIn", false)
         if (Session.isLoggedIn) {
             Session.userId = prefs.getInt("userId", -1)
             Session.username = prefs.getString("username", null)
             Session.email = prefs.getString("email", null)
         }
-        if(!Session.isLoggedIn){
+        if (!Session.isLoggedIn) {
             onNavigateToLogin()
         }
-
-
-        Image(
-            painter = painterResource(id = R.drawable.logo), // вместо "logo" напиши имя твоего файла
-            contentDescription = "Мой логотип", // для незрячих людей, можно написать "Лого"
-            modifier = Modifier.size(150.dp) // размер в пикселах (150 dp)
-        )
-
     }
 }
-
-
-//@Composable
-//fun AudioPlayer() {
-//    var isPlaying by remember {
-//        mutableStateOf(false)
-//    }
-//
-//
-//
-//
-//
-//    val context = LocalContext.current
-//
-//    val player = remember {
-//
-//        ExoPlayer.Builder(context).build().apply {
-//
-//            setMediaItem(
-//                MediaItem.fromUri(
-//                    "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"
-//                )
-//            )
-//
-//            prepare()
-//        }
-//    }
-//    var sliderPosition by remember {
-//        mutableStateOf(0f)
-//    }
-//
-//
-//    LaunchedEffect(player) {
-//
-//        while (true) {
-//
-//            if (player.duration > 0) {
-//
-//                sliderPosition =
-//                    player.currentPosition.toFloat() /
-//                            player.duration.toFloat()
-//            }
-//
-//            kotlinx.coroutines.delay(500)
-//        }
-//    }
-//    DisposableEffect(Unit) {
-//        onDispose {
-//            player.release()
-//        }
-//    }
-//
-//    Column(
-//        horizontalAlignment = Alignment.CenterHorizontally
-//    ) {
-//
-//        IconButton(
-//            modifier = Modifier.size(80.dp),
-//            onClick = {
-//
-//                if (isPlaying) {
-//                    player.pause()
-//                } else {
-//                    player.play()
-//                }
-//
-//                isPlaying = !isPlaying
-//            }
-//        ) {
-//
-//            Icon(
-//                imageVector =
-//                    if (isPlaying)
-//                        Icons.Default.Pause
-//                    else
-//                        Icons.Default.PlayArrow,
-//                contentDescription = null,
-//                        modifier = Modifier.size(60.dp)
-//            )
-//        }
-//        Slider(
-//            value = sliderPosition,
-//
-//            onValueChange = {
-//                sliderPosition = it
-//            },
-//
-//            onValueChangeFinished = {
-//
-//                player.seekTo(
-//                    (player.duration * sliderPosition).toLong()
-//                )
-//            },
-// //           valueRange = 0f..100f
-//                    valueRange = 0f..1f
-//        )
-//    }
-//
-//}
-
-
