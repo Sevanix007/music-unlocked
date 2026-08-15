@@ -22,4 +22,4 @@ This project is my way of restoring balance. It is built for personal use and as
 
 ## 👨‍💻 Current Status
 
-The app is currently under development. At this point, features for playing files from the database have been implemented. The database is stored on the local device, but a server can be set up in the future. Current sastus is pre-alpha version
+The app is currently under development. At this point, features for playing files from the database have been implemented, connected the NewPipe extractor module. The database is stored on the local device, but a server can be set up in the future. Current sastus is pre-alpha version.
