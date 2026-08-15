@@ -46,6 +46,15 @@ android {
 
 
 dependencies {
+
+
+
+//    NEW PIPE EXTRACTOR!!!!!!
+    implementation("com.github.TeamNewPipe:NewPipeExtractor:0.26.4")
+
+
+//
+
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.material3)
