@@ -22,6 +22,9 @@ fun MiniPlayer(onTap: () -> Unit) {
     val currentPosition by viewModel.currentPosition
     val duration by viewModel.duration
 
+    // Если название трека пустое, значит очередь пуста или ничего не выбрано - скрываем плеер
+    if (currentTrackTitle.isEmpty()) return
+
     val progress = if (duration > 0) currentPosition.toFloat() / duration.toFloat() else 0f
 
     Surface(
