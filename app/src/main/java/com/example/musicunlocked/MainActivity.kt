@@ -92,6 +92,10 @@ class MainActivity : ComponentActivity() {
                         onAddTrack = { name, author, link ->
                             addTrackIfNotExist(name, author, link)
                         },
+                        onNavigateToExtractor = {
+                            val intent = Intent(this@MainActivity, Extractor_Activity_Test::class.java)
+                            startActivity(intent)
+                        },
                         modifier = Modifier.padding(innerPadding)
                     )
                 }
@@ -107,6 +111,7 @@ fun MainScreen(
     onNavigateToRegister: () -> Unit,
     onNavigateToLogin: () -> Unit,
     onAddTrack: (String, String, String) -> Unit,
+    onNavigateToExtractor: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val playerViewModel: PlayerViewModel = viewModel()
@@ -156,6 +161,16 @@ fun MainScreen(
             modifier = Modifier.fillMaxWidth()
         ) {
             Text(text = "Добавить новый трек")
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Button(
+            onClick = { onNavigateToExtractor() },
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
+        ) {
+            Text(text = "Тест экстрактора NewPipe")
         }
 
         Spacer(modifier = Modifier.height(24.dp))

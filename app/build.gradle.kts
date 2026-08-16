@@ -51,6 +51,9 @@ dependencies {
 
 //    NEW PIPE EXTRACTOR!!!!!!
     implementation("com.github.TeamNewPipe:NewPipeExtractor:0.26.4")
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+
+//    for import just use import org.schabi.newpipe.extractor.*
 
 
 //

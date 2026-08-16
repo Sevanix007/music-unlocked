@@ -53,6 +53,7 @@
         <activity android:name=".ManageProfileData" />
         <activity android:name=".UserLibrary" />
         <activity android:name=".TrackActivity" />
+        <activity android:name=".Extractor_Activity_Test" />
 
 
 
