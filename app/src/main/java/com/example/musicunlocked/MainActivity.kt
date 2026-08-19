@@ -157,10 +157,30 @@ fun MainScreen(
                     "Madkid",
                     "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3"
                 )
+                onAddTrack(
+                    "SoundHelix7",
+                    "Madkid",
+                    "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-7.mp3"
+                )
+                onAddTrack(
+                    "SoundHelix4",
+                    "Madkid",
+                    "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3"
+                )
+                onAddTrack(
+                    "SoundHelix2",
+                    "Madkid",
+                    "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3"
+                )
+                onAddTrack(
+                    "SoundHelix1",
+                    "Madkid",
+                    "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"
+                )
             },
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text(text = "Добавить новый трек")
+            Text(text = "Добавить тестовые треки.")
         }
 
         Spacer(modifier = Modifier.height(8.dp))
