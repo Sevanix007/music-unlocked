@@ -24,6 +24,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.musicunlocked.database.entity.Track
 import com.example.musicunlocked.ui.theme.MusicUnlockedTheme
 import kotlinx.coroutines.launch
+import okhttp3.OkHttpClient
+import org.schabi.newpipe.extractor.NewPipe
 
 object Session {
     var isLoggedIn = false
@@ -33,6 +35,14 @@ object Session {
 }
 
 class MainActivity : ComponentActivity() {
+
+    private fun initNewPipe() {
+        try {
+            NewPipe.init(AppDownloader(OkHttpClient()))
+        } catch (_: Exception) {
+            // Already initialized or other error
+        }
+    }
 
     fun addTrackIfNotExist(name: String, author: String, link: String) {
         lifecycleScope.launch {
@@ -59,6 +69,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        initNewPipe()
         enableEdgeToEdge()
         setContent {
             MusicUnlockedTheme {
@@ -92,6 +103,42 @@ class MainActivity : ComponentActivity() {
                         onAddTrack = { name, author, link ->
                             addTrackIfNotExist(name, author, link)
                         },
+                        onAddTrackFromYoutube = { url ->
+                            lifecycleScope.launch {
+                                try {
+                                    val result = YoutubeUtils.extractYoutubeInfo(url)
+                                    val db = DatabaseProvider.getDb(applicationContext)
+                                    val trackDao = db.TrackDao()
+                                    val existingTrack = trackDao.getTrackByNameAndAuthor(result.name, result.author)
+
+                                    if (existingTrack == null) {
+                                        trackDao.insert(
+                                            Track(
+                                                trackName = result.name,
+                                                trackAuthor = result.author,
+                                                trackLink = result.bestAudioUrl ?: "",
+                                                trackLikes = result.likeCount.toInt().coerceAtLeast(0),
+                                                trackListeners = result.viewCount.toInt().coerceAtLeast(0),
+                                                trackDuration = result.durationSeconds * 1000
+                                            )
+                                        )
+                                        Toast.makeText(this@MainActivity, "Трек добавлен!", Toast.LENGTH_SHORT).show()
+                                    } else {
+                                        // Обновляем данные
+                                        val updatedTrack = existingTrack.copy(
+                                            trackLikes = result.likeCount.toInt().coerceAtLeast(0),
+                                            trackListeners = result.viewCount.toInt().coerceAtLeast(0),
+                                            trackLink = result.bestAudioUrl ?: existingTrack.trackLink,
+                                            trackDuration = result.durationSeconds * 1000
+                                        )
+                                        trackDao.update(updatedTrack)
+                                        Toast.makeText(this@MainActivity, "Трек обновлен!", Toast.LENGTH_SHORT).show()
+                                    }
+                                } catch (e: Exception) {
+                                    Toast.makeText(this@MainActivity, "Ошибка: ${e.message}", Toast.LENGTH_LONG).show()
+                                }
+                            }
+                        },
                         onNavigateToExtractor = {
                             val intent = Intent(this@MainActivity, Extractor_Activity_Test::class.java)
                             startActivity(intent)
@@ -111,6 +158,7 @@ fun MainScreen(
     onNavigateToRegister: () -> Unit,
     onNavigateToLogin: () -> Unit,
     onAddTrack: (String, String, String) -> Unit,
+    onAddTrackFromYoutube: (String) -> Unit,
     onNavigateToExtractor: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -118,8 +166,9 @@ fun MainScreen(
     val context = LocalContext.current
     val db = remember { DatabaseProvider.getDb(context) }
     var allTracks by remember { mutableStateOf<List<Track>>(emptyList()) }
+    var ytUrl by remember { mutableStateOf("") }
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(allTracks) {
         allTracks = db.TrackDao().getAllTracks()
     }
 
@@ -191,6 +240,27 @@ fun MainScreen(
             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
         ) {
             Text(text = "Тест экстрактора NewPipe")
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        OutlinedTextField(
+            value = ytUrl,
+            onValueChange = { ytUrl = it },
+            label = { Text("YouTube URL") },
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Button(
+            onClick = {
+                if (ytUrl.isNotBlank()) {
+                    onAddTrackFromYoutube(ytUrl)
+                    ytUrl = ""
+                }
+            },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(text = "Добавить новый трек с YouTube")
         }
 
         Spacer(modifier = Modifier.height(24.dp))
