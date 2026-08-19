@@ -221,6 +221,9 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
 
     fun setQueue(tracks: List<Track>, startIndex: Int = 0) {
         controller?.let { player ->
+         player.stop()
+            player.clearMediaItems()
+            //очень спорное решение от ИИ, но здесь комментарии делать не буду. в целом, это логично.
             val mediaItems = tracks.map { track ->
                 MediaItem.Builder()
                     .setMediaId(track.trackId.toString())

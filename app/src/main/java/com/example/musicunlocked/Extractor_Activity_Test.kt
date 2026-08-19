@@ -90,6 +90,9 @@ fun ExtractorScreen() {
 
         Button(
             onClick = {
+//                // Останавливаем текущее воспроизведение при начале нового поиска
+//                playerViewModel.pause()
+// Пусть пока будет в комменатриях
                 scope.launch {
                     resultText = "Extracting..."
                     extractionResult = null
