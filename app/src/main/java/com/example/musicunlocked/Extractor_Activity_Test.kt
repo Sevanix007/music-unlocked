@@ -109,6 +109,7 @@ fun ExtractorScreen() {
                         trackName = extractionResult?.name ?: "Unknown",
                         trackAuthor = extractionResult?.author ?: "Unknown",
                         trackLink = audioUrl,
+                        trackLinkYouTube = extractionResult?.originalUrl ?: "",
                         trackLikes = extractionResult?.likeCount?.toInt() ?: 0,
                         trackListeners = extractionResult?.viewCount?.toInt() ?: 0,
                         trackDuration = extractionResult?.durationSeconds?.times(1000) ?: 0L

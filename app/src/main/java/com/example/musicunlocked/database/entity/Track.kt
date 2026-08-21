@@ -37,7 +37,10 @@ data class Track(
     val trackLikes: Int,
 
     @ColumnInfo(name = "trackLink")
-    val trackLink: String
+    val trackLink: String,
+
+    @ColumnInfo(name = "trackLinkYouTube")
+    val trackLinkYouTube: String
 )
 
 

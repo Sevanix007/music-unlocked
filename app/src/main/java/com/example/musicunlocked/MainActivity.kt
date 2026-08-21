@@ -55,6 +55,7 @@ class MainActivity : ComponentActivity() {
                         trackName = name,
                         trackAuthor = author,
                         trackLink = link,
+                        trackLinkYouTube = link,
                         trackLikes = 0,
                         trackListeners = 0,
                         trackDuration = 0
@@ -117,6 +118,7 @@ class MainActivity : ComponentActivity() {
                                                 trackName = result.name,
                                                 trackAuthor = result.author,
                                                 trackLink = result.bestAudioUrl ?: "",
+                                                trackLinkYouTube = result.originalUrl,
                                                 trackLikes = result.likeCount.toInt().coerceAtLeast(0),
                                                 trackListeners = result.viewCount.toInt().coerceAtLeast(0),
                                                 trackDuration = result.durationSeconds * 1000
@@ -129,6 +131,7 @@ class MainActivity : ComponentActivity() {
                                             trackLikes = result.likeCount.toInt().coerceAtLeast(0),
                                             trackListeners = result.viewCount.toInt().coerceAtLeast(0),
                                             trackLink = result.bestAudioUrl ?: existingTrack.trackLink,
+                                            trackLinkYouTube = result.originalUrl,
                                             trackDuration = result.durationSeconds * 1000
                                         )
                                         trackDao.update(updatedTrack)

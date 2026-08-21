@@ -15,6 +15,7 @@ data class ExtractionResult(
     val viewCount: Long,
     val likeCount: Long,
     val bestAudioUrl: String?,
+    val originalUrl: String,
     val fullInfo: String
 )
 
@@ -75,6 +76,7 @@ object YoutubeUtils {
             viewCount = views,
             likeCount = likes,
             bestAudioUrl = bestAudioUrl,
+            originalUrl = url,
             fullInfo = fullInfo
         )
     }

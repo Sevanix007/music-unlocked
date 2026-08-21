@@ -36,6 +36,9 @@ interface TrackDao {
     @Query("UPDATE Track SET trackLink = :newLink WHERE trackId = :trackId")
     suspend fun updateTrackLinkById(trackId: Int, newLink: String)
 
+    @Query("UPDATE Track SET trackLinkYouTube = :newYouTubeLink WHERE trackId = :trackId")
+    suspend fun updateTrackLinkYouTubeById(trackId: Int, newYouTubeLink: String)
+
     @Query("SELECT * FROM Track WHERE trackName = :name AND trackAuthor = :author LIMIT 1")
     suspend fun getTrackByNameAndAuthor(name: String, author: String): Track?
 
@@ -43,9 +46,9 @@ interface TrackDao {
     suspend fun getTracksByPlaylistId(playlistId: Int): List<Track>
 
     @Query("""
-    INSERT INTO Track (trackName, trackAuthor, trackDuration, trackListeners, trackLikes, trackLink)
-    VALUES (:trackName, :trackAuthor, 0, 0, 0, :trackLink)
+    INSERT INTO Track (trackName, trackAuthor, trackDuration, trackListeners, trackLikes, trackLink, trackLinkYouTube)
+    VALUES (:trackName, :trackAuthor, 0, 0, 0, :trackLink, :trackLinkYouTube)
 """)
-    suspend fun insertTestTrack(trackName: String, trackAuthor: String, trackLink: String)
+    suspend fun insertTestTrack(trackName: String, trackAuthor: String, trackLink: String, trackLinkYouTube: String)
 
 }
