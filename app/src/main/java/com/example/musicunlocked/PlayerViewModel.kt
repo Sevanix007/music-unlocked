@@ -2,6 +2,9 @@ package com.example.musicunlocked
 
 import android.app.Application
 import android.content.ComponentName
+import android.os.Handler
+import android.os.Looper
+import android.widget.Toast
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -9,6 +12,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
+import androidx.media3.common.PlaybackException
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.example.musicunlocked.database.entity.Playlist
@@ -42,6 +46,7 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     val playlistsWithCurrentTrack: State<Set<Int>> = _playlistsWithCurrentTrack
 
     private var controller: MediaController? = null
+    private val recoveryAttemptedTrackIds = mutableSetOf<Int>()
 
     init {
         val sessionToken = SessionToken(
@@ -62,6 +67,10 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
                         override fun onPlaybackStateChanged(playbackState: Int) {
                             _duration.longValue = duration.coerceAtLeast(0L)
                             updateDurationInDatabase(currentMediaItem)
+                        }
+
+                        override fun onPlayerError(error: PlaybackException) {
+                            refreshExpiredYoutubeLink()
                         }
 
                         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
@@ -199,6 +208,46 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
+    public fun refreshExpiredYoutubeLink() {
+        showToast("проверка...")
+        val player = controller ?: return
+        val mediaItem = player.currentMediaItem ?: return
+        val trackId = mediaItem.mediaId.toIntOrNull() ?: return
+
+        if (!recoveryAttemptedTrackIds.add(trackId)) return
+
+        viewModelScope.launch {
+            val db = DatabaseProvider.getDb(getApplication())
+            val track = db.TrackDao().getTrackById(trackId)
+            if (track == null || track.trackLinkYouTube.isBlank()) return@launch
+
+            try {
+                val result = YoutubeUtils.extractYoutubeInfo(track.trackLinkYouTube)
+                val refreshedUrl = result.bestAudioUrl?.takeIf { it.isNotBlank() } ?: return@launch
+                db.TrackDao().updateTrackLinkById(trackId, refreshedUrl)
+
+                val currentPlayer = controller ?: return@launch
+                val currentMediaItem = currentPlayer.currentMediaItem
+                if (currentMediaItem?.mediaId != trackId.toString()) return@launch
+
+                val refreshedMediaItem = currentMediaItem.buildUpon()
+                    .setUri(refreshedUrl)
+                    .build()
+                currentPlayer.replaceMediaItem(currentPlayer.currentMediaItemIndex, refreshedMediaItem)
+                currentPlayer.prepare()
+                currentPlayer.play()
+                showToast("новый урл")
+            } catch (_: Exception) {
+            }
+        }
+    }
+
+    private fun showToast(message: String) {
+        Handler(Looper.getMainLooper()).post {
+            Toast.makeText(getApplication<Application>(), message, Toast.LENGTH_LONG).show()
+        }
+    }
+
     fun play() {
         controller?.play()
     }
@@ -221,6 +270,7 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
 
     fun setQueue(tracks: List<Track>, startIndex: Int = 0) {
         controller?.let { player ->
+            recoveryAttemptedTrackIds.clear()
          player.stop()
             player.clearMediaItems()
             //очень спорное решение от ИИ, но здесь комментарии делать не буду. в целом, это логично.
