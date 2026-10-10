@@ -209,7 +209,7 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     public fun refreshExpiredYoutubeLink() {
-        showToast("проверка...")
+        showToast("Старый урл будет заменен новым...")
         val player = controller ?: return
         val mediaItem = player.currentMediaItem ?: return
         val trackId = mediaItem.mediaId.toIntOrNull() ?: return
@@ -236,7 +236,7 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
                 currentPlayer.replaceMediaItem(currentPlayer.currentMediaItemIndex, refreshedMediaItem)
                 currentPlayer.prepare()
                 currentPlayer.play()
-                showToast("новый урл")
+                showToast("новый урл был поставлен")
             } catch (_: Exception) {
             }
         }
