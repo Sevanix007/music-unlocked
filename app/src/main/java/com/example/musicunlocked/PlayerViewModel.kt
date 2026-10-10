@@ -17,6 +17,7 @@ import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.example.musicunlocked.database.entity.Playlist
 import com.example.musicunlocked.database.entity.Track
+import android.util.Log
 import com.example.musicunlocked.database.entity.TrackPlaylist
 import com.google.common.util.concurrent.MoreExecutors
 import kotlinx.coroutines.delay
@@ -209,7 +210,6 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     public fun refreshExpiredYoutubeLink() {
-        showToast("Старый урл будет заменен новым...")
         val player = controller ?: return
         val mediaItem = player.currentMediaItem ?: return
         val trackId = mediaItem.mediaId.toIntOrNull() ?: return
@@ -219,25 +219,46 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
         viewModelScope.launch {
             val db = DatabaseProvider.getDb(getApplication())
             val track = db.TrackDao().getTrackById(trackId)
-            if (track == null || track.trackLinkYouTube.isBlank()) return@launch
+            if (track == null || track.trackLinkYouTube.isBlank()) {
+                recoveryAttemptedTrackIds.remove(trackId)
+                return@launch
+            }
+
+            showToast("Обновление ссылок трека...")
 
             try {
                 val result = YoutubeUtils.extractYoutubeInfo(track.trackLinkYouTube)
-                val refreshedUrl = result.bestAudioUrl?.takeIf { it.isNotBlank() } ?: return@launch
+                val refreshedUrl = result.bestAudioUrl?.takeIf { it.isNotBlank() }
+                if (refreshedUrl == null) {
+                    recoveryAttemptedTrackIds.remove(trackId)
+                    showToast("Не удалось извлечь аудиопоток")
+                    return@launch
+                }
+
                 db.TrackDao().updateTrackLinkById(trackId, refreshedUrl)
 
                 val currentPlayer = controller ?: return@launch
                 val currentMediaItem = currentPlayer.currentMediaItem
                 if (currentMediaItem?.mediaId != trackId.toString()) return@launch
 
+                val savedPosition = currentPlayer.currentPosition
+                val currentIndex = currentPlayer.currentMediaItemIndex
+
                 val refreshedMediaItem = currentMediaItem.buildUpon()
                     .setUri(refreshedUrl)
                     .build()
-                currentPlayer.replaceMediaItem(currentPlayer.currentMediaItemIndex, refreshedMediaItem)
+
+                currentPlayer.replaceMediaItem(currentIndex, refreshedMediaItem)
                 currentPlayer.prepare()
+                if (savedPosition > 0) {
+                    currentPlayer.seekTo(currentIndex, savedPosition)
+                }
                 currentPlayer.play()
-                showToast("новый урл был поставлен")
-            } catch (_: Exception) {
+                showToast("Ссылка на трек обновлена")
+            } catch (e: Exception) {
+                recoveryAttemptedTrackIds.remove(trackId)
+                Log.e("PlayerViewModel", "Failed to refresh YouTube URL for trackId=$trackId", e)
+                showToast("Ошибка при обновлении ссылки")
             }
         }
     }
