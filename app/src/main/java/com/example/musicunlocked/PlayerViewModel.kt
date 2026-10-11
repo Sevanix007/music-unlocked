@@ -17,6 +17,7 @@ import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.example.musicunlocked.database.entity.Playlist
 import com.example.musicunlocked.database.entity.Track
+import android.net.Uri
 import android.util.Log
 import com.example.musicunlocked.database.entity.TrackPlaylist
 import com.google.common.util.concurrent.MoreExecutors
@@ -71,7 +72,7 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
                         }
 
                         override fun onPlayerError(error: PlaybackException) {
-                            refreshExpiredYoutubeLink()
+                            refreshExpiredYoutubeLink(force = true)
                         }
 
                         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
@@ -79,6 +80,7 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
                             _duration.longValue = duration.coerceAtLeast(0L)
                             checkIfLiked(mediaItem)
                             updatePlaylistsInfo(mediaItem)
+                            checkAndRefreshIfExpired(mediaItem)
                         }
                     })
                     _isPlaying.value = isPlaying
@@ -86,6 +88,7 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
                     _currentTrackTitle.value = currentMediaItem?.mediaMetadata?.title?.toString() ?: ""
                     checkIfLiked(currentMediaItem)
                     updatePlaylistsInfo(currentMediaItem)
+                    checkAndRefreshIfExpired(currentMediaItem)
                 }
                 startPositionTracker()
             } catch (e: Exception) {
@@ -209,10 +212,35 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
-    public fun refreshExpiredYoutubeLink() {
+    private fun isLinkExpiredOrExpiringSoon(url: String?, thresholdMinutes: Long = 20): Boolean {
+        if (url.isNullOrBlank()) return true
+        return try {
+            val uri = Uri.parse(url)
+            val expireStr = uri.getQueryParameter("expire") ?: return false
+            val expireSec = expireStr.toLongOrNull() ?: return false
+            val currentSec = System.currentTimeMillis() / 1000
+            (expireSec - currentSec) < (thresholdMinutes * 60)
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    private fun checkAndRefreshIfExpired(mediaItem: MediaItem?) {
+        val uri = mediaItem?.localConfiguration?.uri?.toString()
+        if (uri != null && isLinkExpiredOrExpiringSoon(uri)) {
+            refreshExpiredYoutubeLink(force = true)
+        }
+    }
+
+    public fun refreshExpiredYoutubeLink(force: Boolean = false) {
         val player = controller ?: return
         val mediaItem = player.currentMediaItem ?: return
         val trackId = mediaItem.mediaId.toIntOrNull() ?: return
+
+        val currentUri = mediaItem.localConfiguration?.uri?.toString()
+        if (!force && currentUri != null && !isLinkExpiredOrExpiringSoon(currentUri)) {
+            return
+        }
 
         if (!recoveryAttemptedTrackIds.add(trackId)) return
 
@@ -221,6 +249,18 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
             val track = db.TrackDao().getTrackById(trackId)
             if (track == null || track.trackLinkYouTube.isBlank()) {
                 recoveryAttemptedTrackIds.remove(trackId)
+                return@launch
+            }
+
+            if (!force && !isLinkExpiredOrExpiringSoon(track.trackLink)) {
+                recoveryAttemptedTrackIds.remove(trackId)
+                if (currentUri != track.trackLink) {
+                    val currentPlayer = controller ?: return@launch
+                    val currentIndex = currentPlayer.currentMediaItemIndex
+                    val refreshedMediaItem = mediaItem.buildUpon().setUri(track.trackLink).build()
+                    currentPlayer.replaceMediaItem(currentIndex, refreshedMediaItem)
+                    currentPlayer.prepare()
+                }
                 return@launch
             }
 
